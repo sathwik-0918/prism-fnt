@@ -10,6 +10,7 @@ import Signin from "./components/common/Signin";
 import Signup from "./components/common/Signup";
 import Dashboard from "./components/dashboard/Dashboard";
 import ChatPage from "./components/chat/ChatPage";
+import { ChatProvider } from "./contexts/ChatContext";   // ← add
 
 const router = createBrowserRouter([
   {
@@ -21,7 +22,11 @@ const router = createBrowserRouter([
       { path: "signup", element: <Signup /> },
       {
         path: "dashboard/:email",
-        element: <Dashboard />,
+        element: (
+          <ChatProvider>             
+            <Dashboard />
+          </ChatProvider>
+        ),
         children: [
           { path: "chat", element: <ChatPage /> },
           { path: "", element: <Navigate to="chat" /> },
