@@ -1,9 +1,8 @@
-import React from 'react'
-
 function Footer() {
   return (
-    <div>Footer</div>
-  )
+    <div className="p-4 bg-dark text-white text-center">
+      © 2025 Prism — AI-Powered JEE/NEET Preparation
+    </div>
+  );
 }
-
-export default Footer
+export default Footer;
