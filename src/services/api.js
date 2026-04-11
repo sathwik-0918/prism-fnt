@@ -39,7 +39,12 @@ export const updateSessionTitle = (userId, sessionId, title) =>
 export const generateQuiz = (data) =>
   api.post("/quiz", data, { timeout: 180000 });   // 3 min — Ollama needs time for quiz generation
 
+export const saveQuizResult = (data) => api.post("/quiz/save-result", data);
+export const getQuizHistory = (userId) => api.get(`/quiz/history/${userId}`);
+export const getOverallQuizAnalysis = (userId) => api.get(`/quiz/overall-analysis/${userId}`);
+
 // ── PERSONALIZATION ───────────────────────────
+
 export const getPersonalization = (userId) =>
   api.get(`/personalization/${userId}`);
 

@@ -26,10 +26,19 @@ function Header() {
             <Link to="signup" className="btn btn-light btn-sm">Sign Up</Link>
           </div>
         ) : (
-          <div className="d-flex align-items-center gap-3">
-            <img src={user.imageUrl} width="35px" className="rounded-circle" alt="" />
-            <span className="text-white fw-semibold">{user.firstName}</span>
-            <button className="btn btn-danger btn-sm" onClick={handleSignout}>
+          <div className='d-flex align-items-center gap-3'>
+            <Link to="/profile" style={{ textDecoration: "none" }}>
+              <img
+                src={user.imageUrl}
+                width='40px'
+                className='rounded-circle'
+                alt=''
+                style={{ cursor: "pointer", border: "2px solid white" }}
+                title="View Profile"
+              />
+            </Link>
+            <span className='text-white fw-semibold d-none d-md-block'>{user.firstName}</span>
+            <button className='btn btn-danger btn-sm' onClick={handleSignout}>
               Sign Out
             </button>
           </div>

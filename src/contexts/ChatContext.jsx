@@ -96,7 +96,7 @@ export function ChatProvider({ children }) {
   }, []);
 
   // send a message
-  const sendChat = useCallback(async (query, userId, examTarget) => {
+  const sendChat = useCallback(async (query, userId, examTarget, forcedSessionId = null) => {
     if (!query.trim()) return;
 
     // add user message to UI immediately
@@ -114,18 +114,22 @@ export function ChatProvider({ children }) {
     setAbortController(controller);
 
     try {
-      let sessionId = activeSession?.sessionId;
+      // priority: forcedSessionId > activeSession > create new
+      let currentSessionId = forcedSessionId
+        || activeSession?.sessionId
+        || localStorage.getItem("prism_active_session");
 
-      // create new session if none exists
-      if (!sessionId) {
+      if (!currentSessionId) {
         const newSession = await startNewSession(userId, examTarget, query);
-        sessionId = newSession?.sessionId;
+        currentSessionId = newSession?.sessionId;
       }
 
       const res = await sendMessage(
-        { query, userId, examTarget, sessionId },
+        { query, userId, examTarget, sessionId: currentSessionId },
         controller.signal
       );
+
+      if (res.data.message === "cancelled") return;
 
       const assistantMsg = {
         role: "assistant",
@@ -146,12 +150,13 @@ export function ChatProvider({ children }) {
           ...prev,
           {
             role: "assistant",
-            content: "Response stopped.",
+            content: "⏹ Response stopped.",
             sources: [],
             timestamp: new Date().toISOString(),
           },
         ]);
       } else {
+        console.error("[ChatContext] sendChat error:", err);
         setMessages((prev) => [
           ...prev,
           {
@@ -167,6 +172,7 @@ export function ChatProvider({ children }) {
       setAbortController(null);
     }
   }, [activeSession, startNewSession, loadSessions]);
+
 
   // stop current response
   const stopResponse = useCallback(() => {

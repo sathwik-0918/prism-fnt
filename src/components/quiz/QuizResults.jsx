@@ -4,10 +4,13 @@
 
 import { useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+// add useEffect to save result when component mounts
+import { useEffect } from "react";
+import { saveQuizResult } from "../../services/api";
 
 const COLORS = ["#28a745", "#dc3545", "#ffc107"];
 
-function QuizResults({ questions, userAnswers, onRetry, examTarget }) {
+function QuizResults({ questions, userAnswers, onRetry, examTarget, userId }) {
 
   const analysis = useMemo(() => {
     let correct = 0, wrong = 0, skipped = 0;
@@ -26,6 +29,39 @@ function QuizResults({ questions, userAnswers, onRetry, examTarget }) {
 
     return { correct, wrong, skipped, score, jeeMarks, breakdown };
   }, [questions, userAnswers]);
+
+  useEffect(() => {
+    async function save() {
+      if (!userId) return;
+      
+      const weakAreas = analysis.breakdown
+        .filter(q => !q.isCorrect && !q.isSkipped)
+        .map(q => {
+          // extract topic keyword from question
+          const words = q.question.split(" ").slice(0, 4).join(" ");
+          return words;
+        })
+        .filter(Boolean);
+
+      try {
+        await saveQuizResult({
+          userId,
+          examTarget,
+          topic: "Mixed",           // or pass from parent
+          difficulty: "medium",
+          totalQuestions: questions.length,
+          correct: analysis.correct,
+          wrong: analysis.wrong,
+          skipped: analysis.skipped,
+          scorePercent: analysis.score,
+          weakAreas: weakAreas.slice(0, 3)
+        });
+      } catch (err) {
+        console.error("Failed to save quiz result:", err);
+      }
+    }
+    save();
+  }, []);
 
   const pieData = [
     { name: "Correct", value: analysis.correct },
