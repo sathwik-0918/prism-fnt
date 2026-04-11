@@ -15,7 +15,10 @@ import StudyPlannerPage from "./components/studyplanner/StudyPlannerPage";
 import PersonalizationPage from "./components/personalization/PersonalizationPage";
 import ProfilePage from "./components/user/ProfilePage";
 import MockTestsPage from "./components/mocktests/MockTestsPage";
+import TutorialsPage from "./components/tutorials/TutorialsPage";
 import { ChatProvider } from "./contexts/ChatContext";
+import CoachingPage from "./components/coaching/CoachingPage";
+import ConceptOfDayPage from "./components/concept/ConceptOfDayPage";
 
 const router = createBrowserRouter([
   {
@@ -55,6 +58,18 @@ const router = createBrowserRouter([
         path: "dashboard/:email/mock-tests",
         element: <MockTestsPage />
       },
+      {
+        path: "dashboard/:email/tutorials",
+        element: <TutorialsPage />
+      },
+      {
+        path: "dashboard/:email/coaching",
+        element: <CoachingPage />
+      },
+      {
+        path: "dashboard/:email/concept",
+        element: <ConceptOfDayPage />
+      },
     ],
   },
 ]);
@@ -63,4 +78,4 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <RouterProvider router={router} />
   </StrictMode>
-);
+);

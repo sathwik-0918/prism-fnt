@@ -32,6 +32,21 @@ function Dashboard() {
       desc: "Direct links to certified NTA mock tests for JEE Mains, Advanced, and NEET.",
       path: `${base}/mock-tests`, color: "#dc3545"
     },
+    {
+      icon: "🎬", title: "Video Tutorials", badge: "YouTube",
+      desc: "Find the best lectures for any topic — filtered by language and quality.",
+      path: `${base}/tutorials`, color: "#ff0000"
+    },
+    {
+      icon: "📍", title: "Coaching Centers", badge: "Nearby",
+      desc: "Find JEE/NEET coaching centers near you using OpenStreetMap.",
+      path: `${base}/coaching`, color: "#e67e22"
+    },
+    {
+      icon: "⚡", title: "Concept of the Day", badge: "Daily",
+      desc: "One beautifully explained high-value topic every day. Don't miss it.",
+      path: `${base}/concept`, color: "#8e44ad"
+    },
   ];
 
   return (
@@ -85,4 +100,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default Dashboard;

@@ -2,6 +2,7 @@
 // full quiz experience — setup → attempt → analysis
 // three stages: SETUP → QUIZ → RESULTS
 
+import QuizHistorySidebar from "./QuizHistorySidebar";
 import { useState } from "react";
 import { useUserContext } from "../../contexts/UserContext";
 import { generateQuiz } from "../../services/api";
@@ -16,6 +17,7 @@ function QuizPage() {
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   async function handleGenerateQuiz(config) {
     setLoading(true);
@@ -60,33 +62,54 @@ function QuizPage() {
   }
 
   return (
-    <div className="container-fluid py-4" style={{ maxWidth: "900px" }}>
-      {stage === "setup" && (
-        <QuizSetup
-          onGenerate={handleGenerateQuiz}
-          loading={loading}
-          error={error}
-          examTarget={currentUser?.examTarget}
-        />
-      )}
-      {stage === "quiz" && (
-        <QuizAttempt
-          questions={questions}
-          onSubmit={handleSubmit}
-          onCancel={handleRetry}
-        />
-      )}
-      {stage === "results" && (
-        <QuizResults
-          questions={questions}
-          userAnswers={answers}
-          onRetry={handleRetry}
-          userId={currentUser?.userId}
-          examTarget={currentUser?.examTarget}
-        />
-      )}
+    <div>
+      <QuizHistorySidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onSelectQuiz={() => setSidebarOpen(false)}
+      />
+
+      <div className="container-fluid py-4" style={{ maxWidth: "900px" }}>
+        {/* header with history button */}
+        <div className="d-flex align-items-center gap-3 mb-4">
+          <button
+            className="btn btn-sm btn-outline-dark"
+            onClick={() => setSidebarOpen(true)}
+            title="Quiz history"
+          >
+            ☰
+          </button>
+          <h3 className="fw-bold mb-0">📝 Quiz</h3>
+        </div>
+
+        {stage === "setup" && (
+          <QuizSetup
+            onGenerate={handleGenerateQuiz}
+            loading={loading}
+            error={error}
+            examTarget={currentUser?.examTarget}
+          />
+        )}
+        {stage === "quiz" && (
+          <QuizAttempt
+            questions={questions}
+            onSubmit={handleSubmit}
+            onCancel={handleRetry}
+          />
+        )}
+        {stage === "results" && (
+          <QuizResults
+            questions={questions}
+            userAnswers={answers}
+            onRetry={handleRetry}
+            userId={currentUser?.userId}
+            examTarget={currentUser?.examTarget}
+          />
+        )}
+      </div>
     </div>
   );
 }
+
 
 export default QuizPage;

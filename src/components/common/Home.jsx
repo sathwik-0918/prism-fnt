@@ -3,6 +3,7 @@ import { useUser } from "@clerk/react";
 import axios from "axios";
 import { useUserContext } from "../../contexts/UserContext";
 import { Link, useNavigate } from "react-router-dom";
+import ConceptPreviewCard from "../concept/ConceptPreviewCard";
 
 function Home() {
   const { isSignedIn, user, isLoaded } = useUser();
@@ -118,6 +119,13 @@ function Home() {
             every answer comes from verified NCERT textbooks and PYQ papers.
           </p>
           <Link to="/signin" className="btn btn-dark btn-lg mt-3">Get Started</Link>
+
+          {/* Concept of the Day preview — before login */}
+          {!isSignedIn && (
+            <div className="mt-5">
+              <ConceptPreviewCard examTarget="JEE" />
+            </div>
+          )}
         </div>
       ) : checking ? (
         <div className="d-flex justify-content-center align-items-center mt-5">
