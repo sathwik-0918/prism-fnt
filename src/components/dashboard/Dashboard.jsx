@@ -1,35 +1,42 @@
 import { useUserContext } from "../../contexts/UserContext";
-import { Link } from "react-router-dom";
-import { Outlet } from "react-router-dom";        // ← add this
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
   const { currentUser } = useUserContext();
+  const navigate = useNavigate();
+  const base = `/dashboard/${currentUser?.email}`;
 
   const cards = [
     {
-      icon: "💬", title: "Ask Prism",
-      desc: "Get answers from NCERT, formulas, PYQs.",
-      link: "chat", badge: "AI Powered"
+      icon: "💬", title: "Ask Prism", badge: "AI Powered",
+      desc: "Ask anything — NCERT concepts, formulas, PYQ solutions, doubt clearing.",
+      path: `${base}/chat`, color: "#212529"
     },
     {
-      icon: "📝", title: "Quiz",
-      desc: "Test yourself with generated MCQs and numericals.",
-      link: "quiz", badge: "Practice"
+      icon: "📝", title: "Quiz", badge: "Practice",
+      desc: "Generate topic-wise MCQ and numerical quizzes with detailed analysis.",
+      path: `${base}/quiz`, color: "#0d6efd"
     },
     {
-      icon: "📅", title: "Study Planner",
-      desc: "Get a personalized day-by-day revision schedule.",
-      link: "planner", badge: "Smart"
+      icon: "📅", title: "Study Planner", badge: "Smart",
+      desc: "Get a personalized day-by-day timetable based on your exam date and weak areas.",
+      path: `${base}/planner`, color: "#28a745"
     },
     {
-      icon: "🧠", title: "Personalization",
-      desc: "See what Prism knows about your learning style.",
-      link: "personalization", badge: "Insights"
-    }
+      icon: "🧠", title: "Personalization", badge: "Insights",
+      desc: "See your learning profile — weak areas, topics mastered, quiz trends.",
+      path: `${base}/personalization`, color: "#6f42c1"
+    },
+    {
+      icon: "🏛️", title: "NTA Mock Tests", badge: "Official",
+      desc: "Direct links to certified NTA mock tests for JEE Mains, Advanced, and NEET.",
+      path: `${base}/mock-tests`, color: "#dc3545"
+    },
   ];
 
   return (
-    <div className="container mt-5">
+    <div className="container py-4">
+      {/* welcome */}
       <div className="mb-4">
         <h2 className="fw-bold">Welcome back, {currentUser?.firstName} 👋</h2>
         <p className="text-secondary">
@@ -37,31 +44,45 @@ function Dashboard() {
         </p>
       </div>
 
+      {/* cards grid */}
       <div className="row g-4">
         {cards.map((card) => (
-          <div key={card.link} className="col-md-6">
-            <div className="card shadow h-100 p-4">
-              <div className="d-flex justify-content-between align-items-start mb-2">
-                <span style={{ fontSize: "2rem" }}>{card.icon}</span>
-                <span className="badge bg-dark">{card.badge}</span>
+          <div key={card.path} className="col-md-6 col-lg-4">
+            <div
+              className="card shadow h-100 p-4"
+              style={{ cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s" }}
+              onClick={() => navigate(card.path)}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "";
+              }}
+            >
+              <div className="d-flex justify-content-between align-items-start mb-3">
+                <span style={{ fontSize: "2.5rem" }}>{card.icon}</span>
+                <span className="badge" style={{ background: card.color }}>
+                  {card.badge}
+                </span>
               </div>
               <h5 className="fw-bold">{card.title}</h5>
-              <p className="text-secondary flex-grow-1">{card.desc}</p>
-              <Link 
-                to={`/dashboard/${currentUser?.email}/${card.link}`}
-                className="btn btn-dark mt-2"
+              <p className="text-secondary flex-grow-1" style={{ fontSize: "0.9rem" }}>
+                {card.desc}
+              </p>
+              <button
+                className="btn btn-dark w-100 mt-2"
+                style={{ background: card.color, border: "none" }}
               >
-                Open →
-              </Link>
+                Open {card.title} →
+              </button>
             </div>
           </div>
         ))}
       </div>
-
-      <div className="mt-5">
-        <Outlet />                          {/* ← chat renders here */}
-      </div>
     </div>
   );
 }
-export default Dashboard;
+
+export default Dashboard;

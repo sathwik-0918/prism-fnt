@@ -42,7 +42,7 @@ function ChatPage() {
 
   // edit = resend edited message
   async function handleEdit(editedText) {
-    await sendChat(editedText, currentUser.userId, currentUser.examTarget);
+    await sendChat(editedText, currentUser.userId, currentUser.examTarget,activeSession?.sessionId);
   }
 
   return (

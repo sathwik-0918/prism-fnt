@@ -13,7 +13,9 @@ import ChatPage from "./components/chat/ChatPage";
 import QuizPage from "./components/quiz/QuizPage";
 import StudyPlannerPage from "./components/studyplanner/StudyPlannerPage";
 import PersonalizationPage from "./components/personalization/PersonalizationPage";
-import { ChatProvider } from "./contexts/ChatContext";   // ← add
+import ProfilePage from "./components/user/ProfilePage";
+import MockTestsPage from "./components/mocktests/MockTestsPage";
+import { ChatProvider } from "./contexts/ChatContext";
 
 const router = createBrowserRouter([
   {
@@ -23,20 +25,35 @@ const router = createBrowserRouter([
       { path: "", element: <Home /> },
       { path: "signin", element: <Signin /> },
       { path: "signup", element: <Signup /> },
+      { path: "profile", element: <ProfilePage /> },
       {
         path: "dashboard/:email",
         element: (
-          <ChatProvider>             
+          <ChatProvider>
             <Dashboard />
           </ChatProvider>
         ),
-        children: [
-          { path: "chat", element: <ChatPage /> },
-          { path: "quiz", element: <QuizPage /> },
-          { path: "planner", element: <StudyPlannerPage /> },
-          { path: "personalization", element: <PersonalizationPage /> },
-          { path: "", element: <Navigate to="chat" /> },
-        ],
+      },
+      // feature pages — all separate routes
+      {
+        path: "dashboard/:email/chat",
+        element: <ChatProvider><ChatPage /></ChatProvider>
+      },
+      {
+        path: "dashboard/:email/quiz",
+        element: <QuizPage />
+      },
+      {
+        path: "dashboard/:email/planner",
+        element: <StudyPlannerPage />
+      },
+      {
+        path: "dashboard/:email/personalization",
+        element: <PersonalizationPage />
+      },
+      {
+        path: "dashboard/:email/mock-tests",
+        element: <MockTestsPage />
       },
     ],
   },
@@ -46,4 +63,4 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <RouterProvider router={router} />
   </StrictMode>
-);
+);

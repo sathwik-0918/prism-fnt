@@ -17,3 +17,58 @@
   border-left: 3px solid #ccc; 
   padding-left: 1rem; color: #666; 
 }
+
+/* Mobile responsive improvements */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 1rem !important;
+  }
+
+  /* chat page full height on mobile */
+  .chat-wrapper {
+    height: 100dvh !important;
+  }
+
+  /* sidebar full width on mobile */
+  .sidebar-mobile {
+    width: 100% !important;
+  }
+
+  /* message bubbles smaller on mobile */
+  .message-bubble {
+    max-width: 90% !important;
+  }
+
+  /* dashboard cards full width on mobile */
+  .dashboard-card {
+    margin-bottom: 1rem;
+  }
+
+  /* hide text on small buttons */
+  .btn-text-hide {
+    display: none;
+  }
+
+  /* quiz options full width */
+  .quiz-option {
+    width: 100%;
+  }
+}
+
+@media (min-width: 1400px) {
+  /* large screens */
+  .container-main {
+    max-width: 1200px !important;
+    margin: 0 auto;
+  }
+}
+
+/* smooth transitions everywhere */
+* {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* no transition on layout properties to avoid jank */
+.no-transition {
+  transition: none !important;
+}
