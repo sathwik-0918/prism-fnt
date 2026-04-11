@@ -9,7 +9,6 @@ import { useChatContext } from "../../contexts/ChatContext";
 import MessageBubble from "./MessageBubble";
 import ChatBox from "./ChatBox";
 import Sidebar from "./Sidebar";
-import QuizPanel from "./QuizPanel";
 
 function ChatPage() {
   const { currentUser } = useUserContext();
@@ -126,8 +125,7 @@ function ChatPage() {
           onStop={stopResponse}
           isLoading={isLoading}
         />
-        {/* quiz panel */}
-        <QuizPanel />
+        {/* quiz panel removed: handled by separate Quiz feature */}
       </div>
     </div>
   );

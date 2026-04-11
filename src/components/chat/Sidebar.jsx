@@ -9,8 +9,7 @@ import { useUserContext } from "../../contexts/UserContext";
 
 function Sidebar({ isOpen, onClose }) {
   const { sessions, activeSession, loadSessions,
-          loadSession, removeSession, setActiveSession,
-          startNewSession } = useChatContext();
+          loadSession, removeSession, startNewChat } = useChatContext();
   const { currentUser } = useUserContext();
   const [deletingId, setDeletingId] = useState(null);
 
@@ -33,7 +32,7 @@ function Sidebar({ isOpen, onClose }) {
   }
 
   async function handleNewChat() {
-    setActiveSession(null);
+    startNewChat();     // ← use startNewChat not setActiveSession(null)
     onClose();
   }
 

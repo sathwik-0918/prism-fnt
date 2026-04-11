@@ -8,24 +8,68 @@ function Home() {
   const { isSignedIn, user, isLoaded } = useUser();
   const { currentUser, setCurrentUser } = useUserContext();
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(false);
   const navigate = useNavigate();
 
   // populate user from Clerk — same as blog app useEffect
   useEffect(() => {
     if (isLoaded && user) {
-      setCurrentUser({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.emailAddresses[0]?.emailAddress,
-        profileImageUrl: user.imageUrl,
-        clerkId: user.id,
+      setCurrentUser((prev) => {
+        // if we already loaded from DB, don't wipe it out!
+        if (prev && prev.userId) return prev;
+        
+        return {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.emailAddresses[0]?.emailAddress,
+          profileImageUrl: user.imageUrl,
+          clerkId: user.id,
+        };
       });
     }
   }, [isLoaded, user, setCurrentUser]);
 
-  // navigate after exam selected — same as blog's role navigation
+  // check backend if user already has examTarget saved
   useEffect(() => {
-    if (currentUser?.examTarget && !error) {
+    async function checkExistingUser() {
+      if (!isLoaded || !user || checking) return;
+      setChecking(true);
+
+      try {
+        const payload = {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.emailAddresses[0]?.emailAddress,
+          profileImageUrl: user.imageUrl,
+          clerkId: user.id,
+          role: "student",
+          examTarget: "UNKNOWN",
+          isActive: true,
+        };
+
+        const res = await axios.post("http://localhost:8000/api/user", payload);
+        const { message, payload: userData } = res.data;
+
+        if (userData?.examTarget && userData.examTarget !== "UNKNOWN") {
+          // user already has examTarget saved — skip selection
+          setCurrentUser({ ...currentUser, ...userData });
+          navigate(`/dashboard/${userData.email}`);
+        }
+      } catch (err) {
+        console.error("User check failed:", err);
+      } finally {
+        setChecking(false);
+      }
+    }
+
+    if (isSignedIn) {
+      checkExistingUser();
+    }
+  }, [isSignedIn, isLoaded]);
+
+  // navigate after exam selected
+  useEffect(() => {
+    if (currentUser?.examTarget && currentUser.examTarget !== "UNKNOWN" && !error) {
       navigate(`/dashboard/${currentUser.email}`);
     }
   }, [currentUser?.examTarget]);
@@ -74,6 +118,10 @@ function Home() {
             every answer comes from verified NCERT textbooks and PYQ papers.
           </p>
           <Link to="/signin" className="btn btn-dark btn-lg mt-3">Get Started</Link>
+        </div>
+      ) : checking ? (
+        <div className="d-flex justify-content-center align-items-center mt-5">
+          <div className="spinner-border text-dark" role="status" />
         </div>
       ) : (
         <div className="row justify-content-center mt-4">

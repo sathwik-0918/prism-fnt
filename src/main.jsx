@@ -10,6 +10,9 @@ import Signin from "./components/common/Signin";
 import Signup from "./components/common/Signup";
 import Dashboard from "./components/dashboard/Dashboard";
 import ChatPage from "./components/chat/ChatPage";
+import QuizPage from "./components/quiz/QuizPage";
+import StudyPlannerPage from "./components/studyplanner/StudyPlannerPage";
+import PersonalizationPage from "./components/personalization/PersonalizationPage";
 import { ChatProvider } from "./contexts/ChatContext";   // ← add
 
 const router = createBrowserRouter([
@@ -29,6 +32,9 @@ const router = createBrowserRouter([
         ),
         children: [
           { path: "chat", element: <ChatPage /> },
+          { path: "quiz", element: <QuizPage /> },
+          { path: "planner", element: <StudyPlannerPage /> },
+          { path: "personalization", element: <PersonalizationPage /> },
           { path: "", element: <Navigate to="chat" /> },
         ],
       },

@@ -2,7 +2,7 @@
 // manages all chat state globally
 // sessions list, active session, messages, loading state
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import {
   createSession,
   getUserSessions,
@@ -19,16 +19,41 @@ export function useChatContext() {
 
 export function ChatProvider({ children }) {
   const [sessions, setSessions] = useState([]);         // sidebar list
-  const [activeSession, setActiveSession] = useState(null);
+  const [activeSession, setActiveSessionState] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [abortController, setAbortController] = useState(null);
+
+  // persist active session ID to localStorage
+  function setActiveSession(session) {
+    setActiveSessionState(session);
+    if (session) {
+      localStorage.setItem("prism_active_session", session.sessionId);
+    } else {
+      localStorage.removeItem("prism_active_session");
+    }
+  }
 
   // load all sessions for sidebar
   const loadSessions = useCallback(async (userId) => {
     try {
       const res = await getUserSessions(userId);
-      setSessions(res.data.payload || []);
+      const sessionList = res.data.payload || [];
+      setSessions(sessionList);
+
+      // restore last active session from localStorage
+      const savedSessionId = localStorage.getItem("prism_active_session");
+      if (savedSessionId && sessionList.length > 0) {
+        const saved = sessionList.find(s => s.sessionId === savedSessionId);
+        if (saved) {
+          const res2 = await getSession(userId, savedSessionId);
+          const full = res2.data.payload;
+          if (full) {
+            setActiveSessionState(full);
+            setMessages(full.messages || []);
+          }
+        }
+      }
     } catch (err) {
       console.error("[ChatContext] Failed to load sessions:", err);
     }
@@ -61,6 +86,13 @@ export function ChatProvider({ children }) {
       console.error("[ChatContext] Failed to create session:", err);
       return null;
     }
+  }, []);
+
+  // new chat — clear everything
+  const startNewChat = useCallback(() => {
+    setActiveSession(null);
+    setMessages([]);
+    localStorage.removeItem("prism_active_session");
   }, []);
 
   // send a message
@@ -149,10 +181,9 @@ export function ChatProvider({ children }) {
     await deleteSession(userId, sessionId);
     setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
     if (activeSession?.sessionId === sessionId) {
-      setActiveSession(null);
-      setMessages([]);
+      startNewChat();
     }
-  }, [activeSession]);
+  }, [activeSession, startNewChat]);
 
   return (
     <ChatContext.Provider value={{
@@ -164,6 +195,7 @@ export function ChatProvider({ children }) {
       loadSessions,
       loadSession,
       startNewSession,
+      startNewChat,
       sendChat,
       stopResponse,
       removeSession,

@@ -8,7 +8,7 @@ const BASE_URL = "http://localhost:8000/api";
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 120000,              // 2 min timeout for Ollama responses
+  timeout: 200000,              // 200s — must exceed backend's 180s pipeline timeout
 });
 
 // ── USER ──────────────────────────────────────
@@ -37,4 +37,18 @@ export const updateSessionTitle = (userId, sessionId, title) =>
 
 // ── QUIZ ──────────────────────────────────────
 export const generateQuiz = (data) =>
-  api.post("/quiz", data);
+  api.post("/quiz", data, { timeout: 180000 });   // 3 min — Ollama needs time for quiz generation
+
+// ── PERSONALIZATION ───────────────────────────
+export const getPersonalization = (userId) =>
+  api.get(`/personalization/${userId}`);
+
+// ── STUDY PLANNER ─────────────────────────────
+export const generateStudyPlan = (data) =>
+  api.post("/study-planner/generate", data);
+
+export const getStudyPlan = (userId) =>
+  api.get(`/study-planner/${userId}`);
+
+export const updateTask = (userId, taskId, completed) =>
+  api.post(`/study-planner/${userId}/task/${taskId}`, { completed });
