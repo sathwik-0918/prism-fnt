@@ -17,7 +17,7 @@ export const createUser = (userData) =>
 
 // ── CHAT ──────────────────────────────────────
 export const sendMessage = (data, signal) =>
-  api.post("/chat", data, { signal });          // signal for abort
+  api.post("/chat", data, { signal, timeout: 0 });          // signal for abort, 0 for no timeout
 
 // ── SESSIONS ──────────────────────────────────
 export const createSession = (data) =>
@@ -37,7 +37,7 @@ export const updateSessionTitle = (userId, sessionId, title) =>
 
 // ── QUIZ ──────────────────────────────────────
 export const generateQuiz = (data) =>
-  api.post("/quiz", data, { timeout: 180000 });   // 3 min — Ollama needs time for quiz generation
+  api.post("/quiz", data, { timeout: 0 });   // 0 = no timeout, let Ollama take its time
 
 export const saveQuizResult = (data) => api.post("/quiz/save-result", data);
 export const getQuizHistory = (userId) => api.get(`/quiz/history/${userId}`);
@@ -50,7 +50,7 @@ export const getPersonalization = (userId) =>
 
 // ── STUDY PLANNER ─────────────────────────────
 export const generateStudyPlan = (data) =>
-  api.post("/study-planner/generate", data);
+  api.post("/study-planner/generate", data, { timeout: 0 });
 
 export const getStudyPlan = (userId) =>
   api.get(`/study-planner/${userId}`);

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useClerk, useUser } from "@clerk/react";
 import { useUserContext } from "../../contexts/UserContext";
@@ -27,6 +28,16 @@ function Header() {
           </div>
         ) : (
           <div className='d-flex align-items-center gap-3'>
+            <div style={{ position: "relative" }}>
+              <button
+                className="btn btn-sm"
+                style={{ background: "rgba(255,255,255,0.15)", color: "white", borderRadius: "20px" }}
+                onClick={() => navigate(`/dashboard/${user.emailAddresses[0]?.emailAddress}/concept`)}
+                title="Today's Concept"
+              >
+                ⚡ Concept of the Day
+              </button>
+            </div>
             <Link to="/profile" style={{ textDecoration: "none" }}>
               <img
                 src={user.imageUrl}

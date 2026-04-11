@@ -1,6 +1,4 @@
 // components/mocktests/MockTestsPage.jsx
-// Direct links to official NTA mock tests
-// JEE Mains, JEE Advanced, NEET
 import { useState } from "react";
 
 const MOCK_TESTS = {
@@ -11,18 +9,18 @@ const MOCK_TESTS = {
     tests: [
       {
         title: "JEE Main Official Mock Test",
-        url: "https://nta.ac.in/ExamConduct",
-        desc: "NTA official practice interface — exactly like real exam"
+        url: "https://nta.ac.in/Quiz",
+        desc: "NTA official practice interface — exactly like the real exam"
       },
       {
         title: "NTA Abhyas App (Mock Tests)",
-        url: "https://nta.ac.in/NTAabhyas",
-        desc: "Free mock tests on official NTA Abhyas platform"
+        url: "https://www.nta.ac.in/abhyas",
+        desc: "Free mock tests on the official NTA Abhyas platform"
       },
       {
         title: "JEE Main Previous Year Papers",
-        url: "https://jeemain.nta.nic.in/",
-        desc: "Official NTA JEE Main portal with past papers"
+        url: "https://www.mathongo.com/iit-jee/jee-main-previous-year-question-paper",
+        desc: "Chapter-wise and year-wise JEE Main PYQs"
       }
     ]
   },
@@ -33,13 +31,13 @@ const MOCK_TESTS = {
     tests: [
       {
         title: "JEE Advanced Mock Test Portal",
-        url: "https://jeeadv.ac.in/",
-        desc: "Official IIT JEE Advanced website with mock tests"
+        url: "https://jeeadv.ac.in/resources.html",
+        desc: "Official IIT JEE Advanced resources and mock tests"
       },
       {
         title: "JEE Advanced Previous Papers",
-        url: "https://jeeadv.ac.in/pastques.html",
-        desc: "All previous year JEE Advanced question papers"
+        url: "https://jeeadv.ac.in/archive.html",
+        desc: "All previous year JEE Advanced question papers from IIT"
       }
     ]
   },
@@ -50,18 +48,18 @@ const MOCK_TESTS = {
     tests: [
       {
         title: "NEET Official Mock Test",
-        url: "https://neet.nta.nic.in/",
-        desc: "Official NTA NEET portal with practice tests"
+        url: "https://nta.ac.in/Quiz",
+        desc: "Official NTA NEET mock test portal"
       },
       {
         title: "NTA Abhyas — NEET Practice",
-        url: "https://nta.ac.in/NTAabhyas",
-        desc: "NTA Abhyas app for NEET practice tests"
+        url: "https://www.nta.ac.in/abhyas",
+        desc: "NTA Abhyas app for NEET practice tests — completely free"
       },
       {
         title: "NEET Previous Year Papers",
-        url: "https://neet.nta.nic.in/PreviousYearQP",
-        desc: "Official NEET previous year question papers"
+        url: "https://disha.live/blogs/neet/neet-previous-year-question-papers",
+        desc: "NEET previous year question papers with solutions"
       }
     ]
   }
@@ -69,6 +67,7 @@ const MOCK_TESTS = {
 
 function MockTestsPage() {
   const [activeExam, setActiveExam] = useState("JEE Mains");
+  const current = MOCK_TESTS[activeExam];
 
   return (
     <div className="container py-4" style={{ maxWidth: "900px" }}>
@@ -76,7 +75,7 @@ function MockTestsPage() {
         <h3 className="fw-bold">🏛️ Official NTA Mock Tests</h3>
         <p className="text-secondary">
           Certified mock tests directly from NTA — the official exam authority.
-          Click any link to open the official test portal.
+          All links open the official portals in a new tab.
         </p>
       </div>
 
@@ -85,7 +84,7 @@ function MockTestsPage() {
         {Object.keys(MOCK_TESTS).map(exam => (
           <button
             key={exam}
-            className={`btn ${activeExam === exam ? "btn-dark" : "btn-outline-secondary"} fw-semibold`}
+            className={`btn fw-semibold ${activeExam === exam ? "btn-dark" : "btn-outline-secondary"}`}
             onClick={() => setActiveExam(exam)}
           >
             {MOCK_TESTS[exam].icon} {exam}
@@ -94,41 +93,40 @@ function MockTestsPage() {
       </div>
 
       {/* test cards */}
-      <div className="card shadow mb-4">
+      <div className="card shadow mb-4 overflow-hidden">
         <div
-          className="card-header p-3"
-          style={{ background: MOCK_TESTS[activeExam].color, color: "white" }}
+          className="p-3"
+          style={{ background: current.color, color: "white" }}
         >
-          <h5 className="mb-0 fw-bold">{MOCK_TESTS[activeExam].icon} {activeExam}</h5>
-          <small>{MOCK_TESTS[activeExam].desc}</small>
+          <h5 className="mb-0 fw-bold">{current.icon} {activeExam}</h5>
+          <small className="opacity-75">{current.desc}</small>
         </div>
-        <div className="card-body p-0">
-          {MOCK_TESTS[activeExam].tests.map((test, i) => (
-            <div
-              key={i}
-              className="d-flex align-items-center justify-content-between p-4 border-bottom"
-            >
-              <div>
-                <div className="fw-semibold">{test.title}</div>
-                <small className="text-secondary">{test.desc}</small>
-              </div>
-              
-                href={test.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-dark btn-sm ms-3 flex-shrink-0"
-              <a>
-                Open →
-              </a>
+
+        {current.tests.map((test, i) => (
+          <div
+            key={i}
+            className="d-flex align-items-center justify-content-between p-4 border-bottom"
+          >
+            <div className="me-3">
+              <div className="fw-semibold">{test.title}</div>
+              <small className="text-secondary">{test.desc}</small>
             </div>
-          ))}
-        </div>
+            <a
+              href={test.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-dark btn-sm flex-shrink-0"
+              style={{ minWidth: "80px" }}
+            >
+              Open →
+            </a>
+          </div>
+        ))}
       </div>
 
-      {/* info note */}
-      <div className="alert alert-info">
-        <strong>ℹ️ Note:</strong> These are official NTA links. Tests open in a new tab.
-        All content is certified by NTA — India's national testing agency.
+      <div className="alert alert-info mb-0">
+        <strong>ℹ️ Note:</strong> All links are official NTA portals.
+        Tests open in a new tab. Content is certified by NTA — India's national testing agency.
       </div>
     </div>
   );

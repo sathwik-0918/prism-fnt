@@ -124,8 +124,13 @@ export function ChatProvider({ children }) {
         currentSessionId = newSession?.sessionId;
       }
 
+      const recentMessages = messages.slice(-6).map(m => ({
+        role: m.role,
+        content: m.content.substring(0, 400)   // cap each message
+      }));
+
       const res = await sendMessage(
-        { query, userId, examTarget, sessionId: currentSessionId },
+        { query, userId, examTarget, sessionId: currentSessionId, recentMessages },
         controller.signal
       );
 
@@ -171,7 +176,7 @@ export function ChatProvider({ children }) {
       setIsLoading(false);
       setAbortController(null);
     }
-  }, [activeSession, startNewSession, loadSessions]);
+  }, [activeSession, messages, startNewSession, loadSessions]);
 
 
   // stop current response
