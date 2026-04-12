@@ -47,6 +47,18 @@ function QuizHistorySidebar({ isOpen, onClose, onSelectQuiz }) {
     return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
   }
 
+  async function handleSelectQuiz(quiz) {
+    if (!quiz._id) return;
+    try {
+      const res = await axios.get(`${BASE}/quiz/history/${currentUser.userId}/${quiz._id}`);
+      if (res.data.payload && onSelectQuiz) {
+        onSelectQuiz(res.data.payload);
+      }
+    } catch (err) {
+      console.error("Failed to load quiz:", err);
+    }
+  }
+
   return (
     <>
       {/* overlay */}
@@ -113,7 +125,7 @@ function QuizHistorySidebar({ isOpen, onClose, onSelectQuiz }) {
                 key={i}
                 className="p-3 rounded mb-2 d-flex align-items-center gap-3"
                 style={{ background: "rgba(255,255,255,0.07)", cursor: "pointer" }}
-                onClick={() => onSelectQuiz && onSelectQuiz(quiz)}
+                onClick={() => handleSelectQuiz(quiz)}
               >
                 {/* score circle */}
                 <div

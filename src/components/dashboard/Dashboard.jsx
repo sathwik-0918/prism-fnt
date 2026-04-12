@@ -47,6 +47,11 @@ function Dashboard() {
       desc: "One beautifully explained high-value topic every day. Don't miss it.",
       path: `${base}/concept`, color: "#8e44ad"
     },
+    {
+      icon: "🏆", title: "Global Leaderboard", badge: "Rankings",
+      desc: "See where you stand. Earn points through quizzes and consistency.",
+      path: `${base}/leaderboard`, color: "#f39c12"
+    },
   ];
 
   return (
@@ -92,6 +97,7 @@ function Dashboard() {
               >
                 Open {card.title} →
               </button>
+              
             </div>
           </div>
         ))}

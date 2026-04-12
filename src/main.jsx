@@ -19,6 +19,7 @@ import TutorialsPage from "./components/tutorials/TutorialsPage";
 import { ChatProvider } from "./contexts/ChatContext";
 import CoachingPage from "./components/coaching/CoachingPage";
 import ConceptOfDayPage from "./components/concept/ConceptOfDayPage";
+import LeaderboardPage from "./components/leaderboard/LeaderboardPage";
 
 const router = createBrowserRouter([
   {
@@ -69,6 +70,10 @@ const router = createBrowserRouter([
       {
         path: "dashboard/:email/concept",
         element: <ConceptOfDayPage />
+      },
+      {
+        path: "dashboard/:email/leaderboard",
+        element: <LeaderboardPage />
       },
     ],
   },

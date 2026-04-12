@@ -61,8 +61,24 @@ function QuizPage() {
     setAnswers({});
   }
 
+  function handleHistorySelect(quiz) {
+    // show that quiz's results directly
+    if (quiz.questions?.length > 0) {
+      setQuestions(quiz.questions);
+      setAnswers(quiz.userAnswers || {});
+      setSelectedHistoryQuiz(quiz);
+      setStage("results");
+      setSidebarOpen(false);
+    }
+  }
+
   return (
     <div>
+      <QuizHistorySidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onSelectQuiz={handleHistorySelect}
+      />
       <QuizHistorySidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

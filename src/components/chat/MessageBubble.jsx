@@ -5,10 +5,12 @@
 // features: copy button, edit button (user only), source badges
 
 import { useState } from "react";
+import MathRenderer from "../common/MathRenderer";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
+
 
 function MessageBubble({ message, onEdit }) {
   const isUser = message.role === "user";
@@ -78,15 +80,7 @@ function MessageBubble({ message, onEdit }) {
                 {message.content}
               </p>
             ) : (
-              // assistant messages — render markdown + math
-              <div className="markdown-body">
-                <ReactMarkdown
-                  remarkPlugins={[remarkMath]}
-                  rehypePlugins={[rehypeKatex]}
-                >
-                  {message.content}
-                </ReactMarkdown>
-              </div>
+              <MathRenderer content={message.content} />
             )}
 
             {/* source badges */}

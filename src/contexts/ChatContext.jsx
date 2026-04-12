@@ -2,7 +2,7 @@
 // manages all chat state globally
 // sessions list, active session, messages, loading state
 
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useContext, useState, useCallback, useEffect,useRef } from "react";
 import {
   createSession,
   getUserSessions,
@@ -24,6 +24,12 @@ export function ChatProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [abortController, setAbortController] = useState(null);
 
+  // ← ref always holds latest messages — fixes stale closure
+  const messagesRef = useRef([]);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   // persist active session ID to localStorage
   function setActiveSession(session) {
     setActiveSessionState(session);
@@ -33,6 +39,8 @@ export function ChatProvider({ children }) {
       localStorage.removeItem("prism_active_session");
     }
   }
+
+  
 
   // load all sessions for sidebar
   const loadSessions = useCallback(async (userId) => {
@@ -124,10 +132,13 @@ export function ChatProvider({ children }) {
         currentSessionId = newSession?.sessionId;
       }
 
-      const recentMessages = messages.slice(-6).map(m => ({
+      // ← use ref for latest messages (not stale closure)
+      const recentMessages = messagesRef.current.slice(-8).map(m => ({
         role: m.role,
-        content: m.content.substring(0, 400)   // cap each message
+        content: m.content.substring(0, 500)   // cap each message
       }));
+
+      console.log(`[ChatContext] Sending with ${recentMessages.length} history messages`);
 
       const res = await sendMessage(
         { query, userId, examTarget, sessionId: currentSessionId, recentMessages },
@@ -176,7 +187,7 @@ export function ChatProvider({ children }) {
       setIsLoading(false);
       setAbortController(null);
     }
-  }, [activeSession, messages, startNewSession, loadSessions]);
+  }, [activeSession, startNewSession, loadSessions]);
 
 
   // stop current response

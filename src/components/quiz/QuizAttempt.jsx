@@ -3,6 +3,7 @@
 // progress bar, next/prev, submit
 
 import { useState } from "react";
+import MathRenderer from "../common/MathRenderer";
 
 function QuizAttempt({ questions, onSubmit, onCancel }) {
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -69,7 +70,9 @@ function QuizAttempt({ questions, onSubmit, onCancel }) {
             </button>
           </div>
 
-          <p className="fs-5 fw-semibold mb-4">{current.question}</p>
+          <div className="mb-4">
+            <MathRenderer content={current.question} />
+          </div>
 
           {/* options */}
           <div className="d-flex flex-column gap-2">
@@ -84,7 +87,7 @@ function QuizAttempt({ questions, onSubmit, onCancel }) {
                 style={{ borderRadius: "10px" }}
                 onClick={() => handleAnswer(currentIdx, key)}
               >
-                <span className="fw-bold me-2">{key}.</span> {value}
+                <span className="fw-bold me-2">{key}.</span><MathRenderer content={value} />
               </button>
             ))}
           </div>

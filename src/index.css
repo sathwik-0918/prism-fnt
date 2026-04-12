@@ -72,3 +72,21 @@
 .no-transition {
   transition: none !important;
 }
+
+/* MathRenderer styles */
+.math-renderer p { margin-bottom: 0.5rem; line-height: 1.7; }
+.math-renderer h1, .math-renderer h2, .math-renderer h3 {
+  margin-top: 1rem; margin-bottom: 0.5rem; font-weight: 700;
+}
+.math-renderer ul, .math-renderer ol { padding-left: 1.5rem; margin-bottom: 0.5rem; }
+.math-renderer li { margin-bottom: 0.25rem; }
+.math-renderer table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.math-renderer th, .math-renderer td {
+  border: 1px solid #dee2e6; padding: 8px 12px; text-align: left;
+}
+.math-renderer th { background: #f8f9fa; font-weight: 700; }
+.math-renderer blockquote {
+  border-left: 3px solid #ccc; padding-left: 1rem; color: #666; margin: 0.5rem 0;
+}
+/* KaTeX display math centering */
+.math-renderer .katex-display { margin: 1rem 0; overflow-x: auto; }

@@ -4,9 +4,9 @@
 
 import { useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
-// add useEffect to save result when component mounts
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { saveQuizResult } from "../../services/api";
+import MathRenderer from "../common/MathRenderer";
 
 const COLORS = ["#28a745", "#dc3545", "#ffc107"];
 
@@ -30,32 +30,36 @@ function QuizResults({ questions, userAnswers, onRetry, examTarget, userId }) {
     return { correct, wrong, skipped, score, jeeMarks, breakdown };
   }, [questions, userAnswers]);
 
+  const savedRef = useRef(false);
+
   useEffect(() => {
+    if (savedRef.current) return;
+    savedRef.current = true;
+
     async function save() {
-      if (!userId) return;
+      if (!userId || !questions?.length) return;
       
       const weakAreas = analysis.breakdown
         .filter(q => !q.isCorrect && !q.isSkipped)
-        .map(q => {
-          // extract topic keyword from question
-          const words = q.question.split(" ").slice(0, 4).join(" ");
-          return words;
-        })
-        .filter(Boolean);
+        .slice(0, 3)
+        .map(q => q.question.split(" ").slice(0, 5).join(" "));
 
       try {
         await saveQuizResult({
           userId,
           examTarget,
-          topic: "Mixed",           // or pass from parent
+          topic: "Mixed",
           difficulty: "medium",
           totalQuestions: questions.length,
           correct: analysis.correct,
           wrong: analysis.wrong,
           skipped: analysis.skipped,
           scorePercent: analysis.score,
-          weakAreas: weakAreas.slice(0, 3)
+          weakAreas,
+          questions: questions,
+          userAnswers: userAnswers
         });
+        console.log("[QuizResults] Result saved.");
       } catch (err) {
         console.error("Failed to save quiz result:", err);
       }
@@ -175,7 +179,7 @@ function QuizResults({ questions, userAnswers, onRetry, examTarget, userId }) {
                   {q.isSkipped ? "SKIP" : q.isCorrect ? "✓" : "✗"}
                 </span>
                 <div className="flex-grow-1">
-                  <p className="fw-semibold mb-1 small">{q.question}</p>
+                  <MathRenderer content={q.question} className="fw-semibold mb-1 small" />
                   <div className="small">
                     {!q.isSkipped && (
                       <span className={q.isCorrect ? "text-success" : "text-danger"}>
@@ -186,9 +190,9 @@ function QuizResults({ questions, userAnswers, onRetry, examTarget, userId }) {
                     )}
                   </div>
                   {q.explanation && (
-                    <p className="text-secondary small mb-0 mt-1">
-                      💬 {q.explanation}
-                    </p>
+                    <div className="text-secondary small mb-0 mt-1">
+                      💬 <MathRenderer content={q.explanation} />
+                    </div>
                   )}
                 </div>
               </div>
