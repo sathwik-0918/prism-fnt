@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { useUserContext } from "../../contexts/UserContext";
 import axios from "axios";
+import { getQuizById } from "../../services/api";
 
 const BASE = "http://localhost:8000/api";
 
@@ -48,14 +49,19 @@ function QuizHistorySidebar({ isOpen, onClose, onSelectQuiz }) {
   }
 
   async function handleSelectQuiz(quiz) {
-    if (!quiz._id) return;
+    if (!quiz._id) {
+      console.error("[QuizSidebar] No _id on quiz:", quiz);
+      return;
+    }
     try {
-      const res = await axios.get(`${BASE}/quiz/history/${currentUser.userId}/${quiz._id}`);
-      if (res.data.payload && onSelectQuiz) {
-        onSelectQuiz(res.data.payload);
+      const res = await getQuizById(currentUser.userId, quiz._id);
+      const fullQuiz = res.data.payload;
+      if (fullQuiz && onSelectQuiz) {
+        console.log("[QuizSidebar] Loaded quiz:", fullQuiz.topic);
+        onSelectQuiz(fullQuiz);
       }
     } catch (err) {
-      console.error("Failed to load quiz:", err);
+      console.error("[QuizSidebar] Failed to load quiz:", err);
     }
   }
 

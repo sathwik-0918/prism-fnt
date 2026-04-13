@@ -29,9 +29,8 @@ const userIcon = L.divIcon({
 
 // coaching center icon
 const centerIcon = (category) => L.divIcon({
-  html: `<div style="background:${
-    category.includes("JEE") ? "#dc3545" : category.includes("College") ? "#0d6efd" : "#28a745"
-  };color:white;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+  html: `<div style="background:${category.includes("JEE") ? "#dc3545" : category.includes("College") ? "#0d6efd" : "#28a745"
+    };color:white;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
     ${category.includes("JEE") ? "🎯" : category.includes("College") ? "🏛️" : "📚"}
   </div>`,
   iconAnchor: [20, 16],
@@ -65,6 +64,8 @@ function CoachingPage() {
   const [filter, setFilter] = useState("All");
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
+  const [ntaCenters, setNtaCenters] = useState([]);
+
 
   // auto-detect on mount
   useEffect(() => {
@@ -103,6 +104,8 @@ function CoachingPage() {
     setError("");
     setSearched(true);
     setCenters([]);
+    setNtaCenters(res.data.ntaCenters || []);
+
 
     try {
       const res = await axios.get(`${BASE}/coaching/search`, {
@@ -141,7 +144,7 @@ function CoachingPage() {
     const R = 6371;
     const dlat = (lat2 - lat1) * Math.PI / 180;
     const dlon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dlat/2)**2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dlon/2)**2;
+    const a = Math.sin(dlat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dlon / 2) ** 2;
     return Math.round(R * 2 * Math.asin(Math.sqrt(a)) * 10) / 10;
   }
 
@@ -189,7 +192,7 @@ function CoachingPage() {
             title="Use my location"
             style={{ borderRadius: "20px", minWidth: "40px" }}
           >
-            {detecting ? <span className="spinner-border spinner-border-sm"/> : "📍"}
+            {detecting ? <span className="spinner-border spinner-border-sm" /> : "📍"}
           </button>
           <button
             className="btn btn-sm btn-light fw-semibold"
@@ -197,7 +200,7 @@ function CoachingPage() {
             disabled={loading}
             style={{ borderRadius: "20px" }}
           >
-            {loading ? <span className="spinner-border spinner-border-sm"/> : "Search"}
+            {loading ? <span className="spinner-border spinner-border-sm" /> : "Search"}
           </button>
         </div>
 
@@ -403,6 +406,26 @@ function CoachingPage() {
               </Marker>
             ))}
           </MapContainer>
+          {/* NTA Exam Centers section */}
+          {ntaCenters.length > 0 && (
+            <div>
+              <div className="p-3 border-top border-bottom bg-light">
+                <h6 className="fw-bold mb-0 small">🏛️ NTA Exam Centers (Past)</h6>
+              </div>
+              {ntaCenters.map((center, i) => (
+                <div key={i} className="p-3 border-bottom d-flex align-items-start gap-2">
+                  <span style={{ fontSize: "1.2rem" }}>🏛️</span>
+                  <div>
+                    <div className="fw-semibold small">{center.name}</div>
+                    <div className="text-secondary" style={{ fontSize: "0.75rem" }}>{center.address}</div>
+                    <span className="badge bg-warning text-dark mt-1" style={{ fontSize: "0.65rem" }}>
+                      {center.type}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* map overlay info */}
           {!searched && !loading && !detecting && (

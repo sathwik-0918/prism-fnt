@@ -18,10 +18,12 @@ function QuizPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [quizConfig, setQuizConfig] = useState({});
 
   async function handleGenerateQuiz(config) {
     setLoading(true);
     setError("");
+    setQuizConfig(config);
     try {
       const res = await generateQuiz({
         topic: config.topic,
@@ -59,17 +61,24 @@ function QuizPage() {
     setStage("setup");
     setQuestions([]);
     setAnswers({});
+    setQuizConfig({});
   }
 
-  function handleHistorySelect(quiz) {
-    // show that quiz's results directly
-    if (quiz.questions?.length > 0) {
-      setQuestions(quiz.questions);
-      setAnswers(quiz.userAnswers || {});
-      setSelectedHistoryQuiz(quiz);
-      setStage("results");
-      setSidebarOpen(false);
+  function handleHistorySelect(fullQuiz) {
+    // fullQuiz has: questions[], userAnswers{}, topic, difficulty etc.
+    if (!fullQuiz.questions || fullQuiz.questions.length === 0) {
+      alert("This quiz has no question data saved. Only newer quizzes support this.");
+      return;
     }
+    setQuestions(fullQuiz.questions);
+    setAnswers(fullQuiz.userAnswers || {});
+    setQuizConfig({
+      topic: fullQuiz.topic,
+      difficulty: fullQuiz.difficulty,
+      questionType: "mcq"
+    });
+    setStage("results");
+    setSidebarOpen(false);
   }
 
   return (
@@ -78,11 +87,6 @@ function QuizPage() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onSelectQuiz={handleHistorySelect}
-      />
-      <QuizHistorySidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onSelectQuiz={() => setSidebarOpen(false)}
       />
 
       <div className="container-fluid py-4" style={{ maxWidth: "900px" }}>
@@ -120,6 +124,8 @@ function QuizPage() {
             onRetry={handleRetry}
             userId={currentUser?.userId}
             examTarget={currentUser?.examTarget}
+            topic={quizConfig.topic}
+            difficulty={quizConfig.difficulty}
           />
         )}
       </div>
