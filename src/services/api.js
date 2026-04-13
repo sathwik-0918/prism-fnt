@@ -57,3 +57,6 @@ export const getStudyPlan = (userId) =>
 
 export const updateTask = (userId, taskId, completed) =>
   api.post(`/study-planner/${userId}/task/${taskId}`, { completed });
+
+export const getQuizById = (userId, quizId) =>
+  api.get(`/quiz/history/${userId}/${quizId}`);
