@@ -57,6 +57,16 @@ function Dashboard() {
       desc: "Chat with study partners, form groups, share notes. Zero distractions.",
       path: `${base}/studychat`, color: "#7c3aed"
     },
+    {
+      icon: "📚", title: "NCERT Line by Line", badge: "NEW",
+      desc: "Every line of NCERT Chemistry & Biology. With highlights, mnemonics & progress.",
+      path: `${base}/ncert`, color: "#7b2d8b"
+    },
+    {
+      icon: "⚔️", title: "Battle Rooms", badge: "Live",
+      desc: "Challenge friends in real-time quiz battles using your study material.",
+      path: `${base}/battle`, color: "#dc3545"
+    },
   ];
 
   return (

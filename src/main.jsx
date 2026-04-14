@@ -22,6 +22,9 @@ import { ChatProvider } from "./contexts/ChatContext";
 import CoachingPage from "./components/coaching/CoachingPage";
 import ConceptOfDayPage from "./components/concept/ConceptOfDayPage";
 import LeaderboardPage from "./components/leaderboard/LeaderboardPage";
+import NCERTPage from "./components/ncert/NCERTPage";
+import NCERTChapterReader from "./components/ncert/NCERTChapterReader";
+import BattleRoomsPage from "./components/battle/BattleRoomsPage";
 
 const router = createBrowserRouter([
   {
@@ -31,6 +34,7 @@ const router = createBrowserRouter([
       { path: "", element: <Home /> },
       { path: "signin", element: <Signin /> },
       { path: "signup", element: <Signup /> },
+      { path: "ncert", element: <NCERTPage /> },
       { path: "profile", element: <ProfilePage /> },
       {
         path: "dashboard/:email",
@@ -82,6 +86,22 @@ const router = createBrowserRouter([
         element: (
           <StudyChatProvider>
             <StudyChatPage />
+          </StudyChatProvider>
+        )
+      },
+      {
+        path: "dashboard/:email/ncert",
+        element: <NCERTPage />
+      },
+      {
+        path: "dashboard/:email/ncert/:subject/:classNum/:chapterNum",
+        element: <NCERTChapterReader />
+      },
+      {
+        path: "dashboard/:email/battle",
+        element: (
+          <StudyChatProvider>
+            <BattleRoomsPage />
           </StudyChatProvider>
         )
       },
