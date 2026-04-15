@@ -30,6 +30,8 @@ function CreateRoomModal({ onClose, onCreated, examTarget }) {
     topic: topics[0],
     difficulty: "medium",
     questionCount: 10,
+    isPYQMode: false,
+    pyqExamType: examTarget === "NEET" ? "NEET" : "JEE Mains",
     useTimer: true,
     timePerQuestion: 30,
     isPrivate: false,
@@ -105,6 +107,40 @@ function CreateRoomModal({ onClose, onCreated, examTarget }) {
               onChange={e => setForm(p => ({...p, questionCount: Number(e.target.value)}))}
             />
           </div>
+        </div>
+
+        <div className="mb-3 p-3 rounded" style={{ background: form.isPYQMode ? "#fff3e0" : "#f8f9fa", border: form.isPYQMode ? "1px solid #ff9800" : "1px solid #e9ecef" }}>
+          <div className="form-check mb-2">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="battlePyqMode"
+              checked={form.isPYQMode}
+              onChange={e => setForm(p => ({ ...p, isPYQMode: e.target.checked }))}
+            />
+            <label className="form-check-label small fw-semibold" htmlFor="battlePyqMode">
+              Use PYQ Engine for battle questions
+            </label>
+          </div>
+
+          {form.isPYQMode && (
+            <>
+              <label className="form-label fw-semibold small mb-2">Exam Paper</label>
+              <div className="d-flex gap-2 flex-wrap">
+                {(examTarget === "NEET" ? ["NEET"] : ["JEE Mains", "JEE Advanced"]).map(exam => (
+                  <button
+                    key={exam}
+                    type="button"
+                    className={`btn btn-sm ${form.pyqExamType === exam ? "btn-warning" : "btn-outline-secondary"}`}
+                    style={{ borderRadius: "20px" }}
+                    onClick={() => setForm(p => ({ ...p, pyqExamType: exam }))}
+                  >
+                    {exam}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="mb-3">
@@ -203,6 +239,7 @@ function PublicRoomCard({ room, onJoin }) {
 
       <div className="d-flex gap-3 mb-3 flex-wrap">
         <small className="text-secondary">📚 {room.topic}</small>
+        {room.isPYQMode && <small className="text-warning">📝 {room.pyqExamType || "PYQ"}</small>}
         <small className="text-secondary">❓ {room.questionCount} questions</small>
         <small className="text-secondary">👥 {room.members?.length || 1} waiting</small>
       </div>

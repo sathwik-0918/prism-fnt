@@ -186,6 +186,7 @@ function BattleRoom({ room: initialRoom, userId, socket, onLeave }) {
           <div className="d-flex gap-3 justify-content-center mb-4 flex-wrap">
             <span className="badge bg-dark">{room.topic}</span>
             <span className="badge bg-secondary">{room.difficulty}</span>
+            {room.isPYQMode && <span className="badge bg-warning text-dark">{room.pyqExamType || "PYQ"}</span>}
             <span className="badge bg-secondary">{room.questionCount} questions</span>
           </div>
 
@@ -321,6 +322,7 @@ function BattleRoom({ room: initialRoom, userId, socket, onLeave }) {
                   Q{questionIndex + 1} / {totalQuestions}
                 </span>
                 <span className="badge bg-secondary">{room.topic}</span>
+                {room.isPYQMode && <span className="badge bg-warning text-dark ms-2">{room.pyqExamType || "PYQ"}</span>}
               </div>
               {useTimer ? (
                 <Timer

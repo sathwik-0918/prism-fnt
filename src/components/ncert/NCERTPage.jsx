@@ -14,52 +14,75 @@ const BASE = "http://localhost:8000/api";
 
 const WEIGHTAGE_CONFIG = {
   very_high: { label: "Very High", color: "#dc3545", bg: "#fff5f5", stars: "⭐⭐⭐⭐⭐" },
-  high:      { label: "High",      color: "#fd7e14", bg: "#fff8f0", stars: "⭐⭐⭐⭐" },
-  medium:    { label: "Medium",    color: "#ffc107", bg: "#fffff0", stars: "⭐⭐⭐" },
-  low:       { label: "Low",       color: "#6c757d", bg: "#f8f9fa", stars: "⭐⭐" },
+  high: { label: "High", color: "#fd7e14", bg: "#fff8f0", stars: "⭐⭐⭐⭐" },
+  medium: { label: "Medium", color: "#ffc107", bg: "#fffff0", stars: "⭐⭐⭐" },
+  low: { label: "Low", color: "#6c757d", bg: "#f8f9fa", stars: "⭐⭐" },
 };
 
 function NCERTPage() {
   const { currentUser } = useUserContext();
   const navigate = useNavigate();
 
-  const [catalog, setCatalog] = useState({});
-  const [selectedSubject, setSelectedSubject] = useState(null);
-  const [selectedClass, setSelectedClass] = useState(null);
-  const [activeTab, setActiveTab] = useState("chapters"); // chapters | highlights
+  const [selectedSubject, setSelectedSubject] = useState("Chemistry");
+  const [selectedClass, setSelectedClass] = useState("11");
+  const [chapters, setChapters] = useState([]);
+  const [revealedChapterCount, setRevealedChapterCount] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("chapters");
   const [userProgress, setUserProgress] = useState([]);
 
   const examTarget = currentUser?.examTarget || "JEE";
 
-  useEffect(() => {
-    loadCatalog();
-  }, [examTarget]);
+  // subjects based on exam
+  const subjects = examTarget === "NEET"
+    ? ["Chemistry", "Biology"]
+    : ["Chemistry"];
 
   useEffect(() => {
-    if (currentUser?.userId) {
-      loadProgress();
-    }
+    loadChapters();
+  }, [selectedSubject, selectedClass]);
+
+  useEffect(() => {
+    if (currentUser?.userId) loadProgress();
   }, [currentUser?.userId]);
 
-  async function loadCatalog() {
+  async function loadChapters() {
     setLoading(true);
+    setChapters([]);
+    setRevealedChapterCount(1);
     try {
-      const res = await axios.get(`${BASE}/ncert/catalog`, {
-        params: { examTarget }
-      });
-      const cat = res.data.payload || {};
-      setCatalog(cat);
-      // auto-select first subject
-      const subjects = Object.keys(cat);
-      if (subjects.length > 0) {
-        setSelectedSubject(subjects[0]);
-        setSelectedClass("Class 11");
-      }
+      const res = await axios.get(
+        `${BASE}/ncert/discover/${selectedSubject}/${selectedClass}`
+      );
+      const discoveredChapters = res.data.payload || [];
+      setChapters(discoveredChapters);
+      setRevealedChapterCount(
+        Math.max(
+          1,
+          Math.min(res.data.visibleChapterCount || 1, discoveredChapters.length || 1)
+        )
+      );
     } catch (err) {
-      console.error("Failed to load catalog:", err);
+      console.error("Chapter load failed:", err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function revealNextChapter() {
+    const nextVisibleCount = Math.min(revealedChapterCount + 1, sortedChapters.length);
+    setRevealedChapterCount(nextVisibleCount);
+
+    try {
+      const res = await axios.post(`${BASE}/ncert/reveal-next`, {
+        subject: selectedSubject,
+        classNum: selectedClass
+      });
+      const sharedVisibleCount = res.data?.payload?.visibleChapterCount || nextVisibleCount;
+      setRevealedChapterCount(Math.max(nextVisibleCount, sharedVisibleCount));
+    } catch (err) {
+      console.error("Reveal next chapter failed:", err);
+      setRevealedChapterCount(revealedChapterCount);
     }
   }
 
@@ -67,7 +90,9 @@ function NCERTPage() {
     try {
       const res = await axios.get(`${BASE}/ncert/progress/${currentUser.userId}`);
       setUserProgress(res.data.payload || []);
-    } catch { }
+    } catch {
+      console.debug("[NCERT] progress load failed");
+    }
   }
 
   function getChapterProgress(subject, classNum, chapterNum) {
@@ -75,17 +100,14 @@ function NCERTPage() {
     return userProgress.find(p => p.progressKey === key);
   }
 
-  const subjects = Object.keys(catalog);
-  const classes = selectedSubject ? Object.keys(catalog[selectedSubject] || {}) : [];
-  const chapters = selectedSubject && selectedClass
-    ? catalog[selectedSubject]?.[selectedClass] || []
-    : [];
+  const classOptions = ["11", "12"];
 
   // sort chapters by weightage
   const sortedChapters = [...chapters].sort((a, b) => {
     const order = { very_high: 0, high: 1, medium: 2, low: 3 };
     return (order[a.weightage] || 3) - (order[b.weightage] || 3);
   });
+  const visibleChapters = sortedChapters.slice(0, revealedChapterCount);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
@@ -168,7 +190,7 @@ function NCERTPage() {
                   key={subject}
                   className={`btn btn-lg fw-bold ${selectedSubject === subject ? "btn-dark" : "btn-outline-dark"}`}
                   style={{ borderRadius: "16px", padding: "12px 28px" }}
-                  onClick={() => { setSelectedSubject(subject); setSelectedClass("Class 11"); }}
+                  onClick={() => { setSelectedSubject(subject); setSelectedClass("11"); }}
                 >
                   {subject === "Chemistry" ? "⚗️" : "🧬"} {subject}
                   {subject === "Chemistry" && <span className="badge bg-danger ms-2 small">JEE + NEET</span>}
@@ -180,14 +202,14 @@ function NCERTPage() {
             {/* Class selector */}
             {selectedSubject && (
               <div className="d-flex gap-2 mb-4">
-                {classes.map(cls => (
+                {classOptions.map(cls => (
                   <button
                     key={cls}
                     className={`btn ${selectedClass === cls ? "btn-dark" : "btn-outline-secondary"}`}
                     style={{ borderRadius: "20px" }}
                     onClick={() => setSelectedClass(cls)}
                   >
-                    {cls}
+                    {`Class ${cls}`}
                   </button>
                 ))}
               </div>
@@ -199,11 +221,12 @@ function NCERTPage() {
                 <div className="spinner-border text-dark" />
               </div>
             ) : (
-              <div className="row g-4">
-                {sortedChapters.map(chapter => {
+              <>
+                <div className="row g-4">
+                {visibleChapters.map(chapter => {
                   const wConfig = WEIGHTAGE_CONFIG[chapter.weightage] || WEIGHTAGE_CONFIG.medium;
                   const progress = getChapterProgress(
-                    selectedSubject, selectedClass?.replace("Class ", ""), chapter.chapter
+                    selectedSubject, selectedClass, chapter.chapter
                   );
                   const progressPct = progress?.progressPercent || 0;
 
@@ -221,8 +244,8 @@ function NCERTPage() {
                         onClick={() => {
                           if (currentUser) {
                             navigate(
-                              `/dashboard/${currentUser.email}/ncert/${selectedSubject}/${selectedClass?.replace("Class ", "")}/${chapter.chapter}`,
-                              { state: { chapter, subject: selectedSubject, classNum: selectedClass?.replace("Class ", "") } }
+                              `/dashboard/${currentUser.email}/ncert/${selectedSubject}/${selectedClass}/${chapter.chapter}`,
+                              { state: { chapter, subject: selectedSubject, classNum: selectedClass } }
                             );
                           } else {
                             navigate("/signin");
@@ -275,9 +298,9 @@ function NCERTPage() {
                               </h6>
                               <div className="d-flex gap-2 flex-wrap">
                                 <small style={{ color: wConfig.color, fontWeight: 600 }}>
-                                  📊 {examTarget === "JEE"
+                                  📊 {chapter.examMarks || (examTarget === "JEE"
                                     ? chapter.jeeMarks
-                                    : chapter.neetMarks} marks
+                                    : chapter.neetMarks)} marks
                                 </small>
                                 <small className="text-secondary">
                                   📝 {chapter.pyqCount}+ PYQs
@@ -350,7 +373,23 @@ function NCERTPage() {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+
+                {sortedChapters.length > visibleChapters.length && (
+                  <div className="text-center mt-4">
+                    <button
+                      className="btn btn-dark fw-semibold"
+                      style={{ borderRadius: "24px", padding: "12px 24px" }}
+                      onClick={revealNextChapter}
+                    >
+                      Generate Next Chapter
+                    </button>
+                    <p className="text-secondary small mt-2 mb-0">
+                      Showing {visibleChapters.length} of {sortedChapters.length} chapters for Class {selectedClass}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

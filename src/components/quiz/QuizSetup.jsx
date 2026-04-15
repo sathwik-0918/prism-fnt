@@ -7,17 +7,17 @@ import { useState } from "react";
 const TOPICS = {
   JEE: {
     Physics: ["Mechanics", "Thermodynamics", "Waves", "Optics",
-              "Electrostatics", "Magnetism", "Modern Physics", "Rotational Motion"],
+      "Electrostatics", "Magnetism", "Modern Physics", "Rotational Motion"],
     Chemistry: ["Organic Chemistry", "Inorganic Chemistry", "Chemical Bonding",
-                "Thermochemistry", "Electrochemistry", "Coordination Compounds"],
+      "Thermochemistry", "Electrochemistry", "Coordination Compounds"],
     Maths: ["Calculus", "Algebra", "Trigonometry", "Coordinate Geometry",
-            "Vectors", "Matrices", "Probability", "Complex Numbers"]
+      "Vectors", "Matrices", "Probability", "Complex Numbers"]
   },
   NEET: {
     Physics: ["Mechanics", "Thermodynamics", "Optics", "Electrostatics", "Modern Physics"],
     Chemistry: ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry"],
     Biology: ["Cell Biology", "Genetics", "Human Physiology", "Plant Physiology",
-              "Ecology", "Evolution", "Biotechnology"]
+      "Ecology", "Evolution", "Biotechnology"]
   }
 };
 
@@ -28,6 +28,9 @@ function QuizSetup({ onGenerate, loading, error, examTarget }) {
   const [difficulty, setDifficulty] = useState("medium");
   const [numQuestions, setNumQuestions] = useState(5);
   const [questionType, setQuestionType] = useState("mcq");
+  // Add PYQ state
+  const [isPYQMode, setIsPYQMode] = useState(false);
+  const [pyqExamType, setPyqExamType] = useState("JEE Mains");
 
   const subjects = TOPICS[examTarget] || TOPICS.JEE;
 
@@ -37,7 +40,7 @@ function QuizSetup({ onGenerate, loading, error, examTarget }) {
       alert("Please select or enter a topic.");
       return;
     }
-    onGenerate({ topic: finalTopic, difficulty, numQuestions, questionType });
+    onGenerate({ topic: finalTopic, difficulty, numQuestions, questionType,isPYQMode, pyqExamType });
   }
 
   return (
@@ -84,6 +87,59 @@ function QuizSetup({ onGenerate, loading, error, examTarget }) {
             </select>
           </div>
 
+          {/* PYQ Mode Toggle */}
+          <div className="col-12">
+            <div
+              className="p-3 rounded"
+              style={{
+                background: isPYQMode ? "#fff3e0" : "#f8f9fa",
+                border: isPYQMode ? "2px solid #ff9800" : "2px solid #e9ecef",
+                transition: "all 0.3s"
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <div className="fw-bold d-flex align-items-center gap-2">
+                    📝 PYQ Engine
+                  </div>
+                  <small className="text-secondary">
+                    Generate questions exclusively from Previous Year Question papers
+                  </small>
+                </div>
+                <div
+                  className="form-check form-switch mb-0"
+                  style={{ transform: "scale(1.3)" }}
+                >
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={isPYQMode}
+                    onChange={e => setIsPYQMode(e.target.checked)}
+                    style={{ cursor: "pointer" }}
+                  />
+                </div>
+              </div>
+
+              {isPYQMode && (
+                <div className="mt-3">
+                  <label className="form-label small fw-semibold">Select Exam Paper:</label>
+                  <div className="d-flex gap-2 flex-wrap">
+                    {["JEE Mains", "JEE Advanced", "NEET"].map(exam => (
+                      <button
+                        key={exam}
+                        className={`btn btn-sm ${pyqExamType === exam ? "btn-warning" : "btn-outline-secondary"}`}
+                        style={{ borderRadius: "20px" }}
+                        onClick={() => setPyqExamType(exam)}
+                      >
+                        {exam}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* custom topic */}
           <div className="col-12">
             <label className="form-label fw-semibold">
@@ -105,9 +161,8 @@ function QuizSetup({ onGenerate, loading, error, examTarget }) {
               {["easy", "medium", "hard"].map(d => (
                 <button
                   key={d}
-                  className={`btn btn-sm flex-fill ${
-                    difficulty === d ? "btn-dark" : "btn-outline-secondary"
-                  }`}
+                  className={`btn btn-sm flex-fill ${difficulty === d ? "btn-dark" : "btn-outline-secondary"
+                    }`}
                   onClick={() => setDifficulty(d)}
                 >
                   {d === "easy" ? "😊 Easy" : d === "medium" ? "🎯 Medium" : "🔥 Hard"}
