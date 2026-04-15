@@ -3,7 +3,7 @@
 // Generates content on-demand, caches globally
 // Supports highlighting, progress tracking, revision mode
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/UserContext";
 import axios from "axios";
@@ -13,29 +13,10 @@ const BASE = "http://localhost:8000/api";
 
 const HIGHLIGHT_COLORS = [
   { key: "yellow", bg: "#fff9c4", border: "#ffc107", label: "Key Fact" },
-  { key: "green",  bg: "#c8e6c9", border: "#4caf50", label: "Formula" },
-  { key: "blue",   bg: "#bbdefb", border: "#2196f3", label: "Definition" },
-  { key: "pink",   bg: "#f8bbd0", border: "#e91e63", label: "Exam Tip" },
+  { key: "green", bg: "#c8e6c9", border: "#4caf50", label: "Formula" },
+  { key: "blue", bg: "#bbdefb", border: "#2196f3", label: "Definition" },
+  { key: "pink", bg: "#f8bbd0", border: "#e91e63", label: "Exam Tip" },
 ];
-
-// List of all topics per chapter (sub-topics from chapter tags + common ones)
-function getTopicsForChapter(chapter, subject) {
-  const baseTags = chapter?.tags || [];
-  const title = chapter?.title || "";
-
-  // generate sensible topic list from tags
-  const topics = [
-    `Introduction to ${title}`,
-    ...baseTags.map(tag => `${tag.charAt(0).toUpperCase() + tag.slice(1)}`),
-    `Important Reactions in ${title}`,
-    `Properties and Comparisons`,
-    `NCERT Examples and Solved Problems`,
-    `Previous Year Questions Analysis`,
-    `Common Mistakes and Misconceptions`,
-  ];
-
-  return [...new Set(topics)].filter(Boolean);
-}
 
 function TopicCard({
   topic, index, isSelected, isCompleted, isGenerating, onClick
@@ -182,7 +163,10 @@ function NCERTChapterReader() {
   const navigate = useNavigate();
 
   const chapter = state?.chapter;
-  const topics = getTopicsForChapter(chapter, subject);
+  const [chapterData, setChapterData] = useState(chapter || null);
+  const [topics, setTopics] = useState([]);
+  const [revealedTopicCount, setRevealedTopicCount] = useState(1);
+  const [loadingTopics, setLoadingTopics] = useState(false);
 
   const [selectedTopicIdx, setSelectedTopicIdx] = useState(0);
   const [content, setContent] = useState(null);
@@ -193,23 +177,93 @@ function NCERTChapterReader() {
   const [revisionCount, setRevisionCount] = useState(0);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const contentRef = useRef(null);
-  const readTimer = useRef(null);
-  const [readingTime, setReadingTime] = useState(0);
 
-  const progressPct = Math.round((completedTopics.size / topics.length) * 100);
+  const progressPct = Math.round((completedTopics.size / Math.max(topics.length, 1)) * 100);
 
   useEffect(() => {
     loadUserProgress();
-    loadTopic(topics[0], 0);
   }, []);
 
-  // reading timer
   useEffect(() => {
-    readTimer.current = setInterval(() => {
-      setReadingTime(prev => prev + 1);
-    }, 60000);
-    return () => clearInterval(readTimer.current);
-  }, []);
+    async function loadChapterMeta() {
+      if (chapter) {
+        setChapterData(chapter);
+        return;
+      }
+      try {
+        const res = await axios.get(`${BASE}/ncert/chapter/${subject}/${classNum}/${chapterNum}`);
+        setChapterData(res.data.payload || null);
+      } catch (err) {
+        console.error("Chapter metadata load failed:", err);
+      }
+    }
+    loadChapterMeta();
+  }, [chapter, subject, classNum, chapterNum]);
+
+  useEffect(() => {
+    async function loadSubtopics() {
+      setLoadingTopics(true);
+      try {
+        const res = await axios.get(
+          `${BASE}/ncert/subtopics/${subject}/${classNum}/${chapterNum}`,
+          { params: { chapterTitle: chapterData?.title || "" } }
+        );
+        const subtopics = res.data.payload || [];
+        if (subtopics.length > 0) {
+          setTopics(subtopics.map(s => s.subtopic));
+          setRevealedTopicCount(
+            Math.max(
+              1,
+              Math.min(res.data.visibleTopicCount || 1, subtopics.length || 1)
+            )
+          );
+        } else if (chapterData?.tags?.length > 0) {
+          setTopics(chapterData.tags);
+          setRevealedTopicCount(1);
+        } else {
+          setTopics([chapterData?.title || "Overview"]);
+          setRevealedTopicCount(1);
+        }
+      } catch (err) {
+        console.error("Subtopics load failed:", err);
+        if (chapterData?.tags?.length > 0) {
+          setTopics(chapterData.tags);
+          setRevealedTopicCount(1);
+        }
+      } finally {
+        setLoadingTopics(false);
+      }
+    }
+    loadSubtopics();
+  }, [subject, classNum, chapterNum, chapterData?.title]);
+
+  useEffect(() => {
+    if (topics.length > 0) {
+      loadTopic(topics[0], 0);
+    }
+  }, [topics]);
+
+  async function revealNextTopicAndLoad() {
+    const nextIdx = revealedTopicCount;
+    if (nextIdx >= topics.length) return;
+
+    const optimisticVisible = Math.min(revealedTopicCount + 1, topics.length);
+    setRevealedTopicCount(optimisticVisible);
+
+    try {
+      const res = await axios.post(`${BASE}/ncert/reveal-next-topic`, {
+        subject,
+        classNum,
+        chapterNum: parseInt(chapterNum)
+      });
+      const sharedVisible = res.data?.payload?.visibleTopicCount || optimisticVisible;
+      setRevealedTopicCount(Math.max(optimisticVisible, sharedVisible));
+    } catch (err) {
+      console.error("Reveal next topic failed:", err);
+    }
+
+    loadTopic(topics[nextIdx], nextIdx);
+  }
 
   async function loadUserProgress() {
     if (!currentUser?.userId) return;
@@ -218,8 +272,8 @@ function NCERTChapterReader() {
       const allProgress = res.data.payload || [];
       const myProgress = allProgress.find(
         p => p.subject === subject &&
-             p.classNum === classNum &&
-             p.chapterNum === parseInt(chapterNum)
+          p.classNum === classNum &&
+          p.chapterNum === parseInt(chapterNum)
       );
       if (myProgress) {
         setCompletedTopics(new Set(myProgress.completedTopics));
@@ -227,7 +281,9 @@ function NCERTChapterReader() {
         if (myProgress.targetDate) setTargetDate(myProgress.targetDate);
         if (myProgress.startDate) setStartDate(myProgress.startDate);
       }
-    } catch { }
+    } catch {
+      console.debug("[NCERT] progress bootstrap failed");
+    }
   }
 
   async function loadTopic(topic, idx) {
@@ -244,7 +300,9 @@ function NCERTChapterReader() {
         setContent(cached.data.payload);
         return;
       }
-    } catch { }
+    } catch {
+      console.debug("[NCERT] cache miss for topic generation");
+    }
 
     // generate
     setGeneratingTopics(prev => new Set([...prev, topic]));
@@ -268,6 +326,36 @@ function NCERTChapterReader() {
     }
   }
 
+  function goToNextTopic() {
+    if (selectedTopicIdx >= topics.length - 1) return;
+    const next = selectedTopicIdx + 1;
+    if (next >= revealedTopicCount) {
+      revealNextTopicAndLoad();
+      return;
+    }
+    loadTopic(topics[next], next);
+    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function regenerateContent() {
+    if (!window.confirm("Regenerate this topic's content? This may take 30-60 seconds.")) return;
+    setContent(null);
+
+    try {
+      const res = await axios.post(`${BASE}/ncert/regenerate`, {
+        subject,
+        classNum,
+        chapterNum: parseInt(chapterNum),
+        topic: topics[selectedTopicIdx],
+        examTarget: currentUser?.examTarget || "JEE"
+      });
+      setContent(res.data.payload);
+    } catch {
+      console.debug("[NCERT] regenerate failed");
+      alert("Regeneration failed. Please try again.");
+    }
+  }
+
   async function markTopicComplete() {
     const topic = topics[selectedTopicIdx];
     const newCompleted = new Set([...completedTopics, topic]);
@@ -282,7 +370,7 @@ function NCERTChapterReader() {
         subject,
         classNum,
         chapterNum: parseInt(chapterNum),
-        chapterTitle: chapter?.title || "",
+        chapterTitle: chapterData?.title || chapter?.title || "",
         completedTopics: [...newCompleted],
         totalTopics: topics.length,
         startDate: startDate || new Date().toISOString(),
@@ -293,9 +381,7 @@ function NCERTChapterReader() {
 
     // auto-advance to next topic
     if (selectedTopicIdx < topics.length - 1) {
-      const next = selectedTopicIdx + 1;
-      loadTopic(topics[next], next);
-      contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      goToNextTopic();
     }
   }
 
@@ -322,7 +408,7 @@ function NCERTChapterReader() {
         subject,
         classNum,
         chapterNum: parseInt(chapterNum),
-        chapterTitle: chapter?.title || "",
+        chapterTitle: chapterData?.title || chapter?.title || "",
         topic: topics[selectedTopicIdx],
         highlightedText: text,
         color
@@ -372,7 +458,7 @@ function NCERTChapterReader() {
             ← Back
           </button>
           <h6 className="fw-bold mb-1" style={{ fontSize: "0.9rem" }}>
-            Ch {chapterNum}. {chapter?.title}
+            Ch {chapterNum}. {chapterData?.title || chapter?.title || "Chapter"}
           </h6>
           <small style={{ opacity: 0.7 }}>
             {subject} — {classNum && `Class ${classNum}`}
@@ -466,7 +552,10 @@ function NCERTChapterReader() {
 
         {/* Topic list */}
         <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
-          {topics.map((topic, idx) => (
+          {loadingTopics && (
+            <div className="small text-secondary mb-2">Loading chapter subtopics...</div>
+          )}
+          {topics.slice(0, revealedTopicCount).map((topic, idx) => (
             <TopicCard
               key={idx}
               topic={topic}
@@ -477,6 +566,16 @@ function NCERTChapterReader() {
               onClick={() => loadTopic(topic, idx)}
             />
           ))}
+
+          {topics.length > revealedTopicCount && (
+            <button
+              className="btn btn-outline-dark w-100 mt-2"
+              style={{ borderRadius: "20px" }}
+              onClick={revealNextTopicAndLoad}
+            >
+              Generate Next Topic
+            </button>
+          )}
         </div>
       </div>
 
@@ -603,7 +702,7 @@ function NCERTChapterReader() {
             )}
 
             {/* Mnemonic */}
-            {content.mnemonic && (
+            {content.mnemonicSourceAvailable && content.mnemonic && (
               <div
                 className="card mb-4 p-4"
                 style={{
@@ -660,6 +759,19 @@ function NCERTChapterReader() {
               </div>
             )}
 
+            <div className="text-center mt-4 mb-2">
+              <button
+                className="btn btn-outline-secondary btn-sm"
+                style={{ borderRadius: "20px" }}
+                onClick={regenerateContent}
+              >
+                🔄 Regenerate Content
+              </button>
+              <p className="text-secondary small mt-1">
+                Use this after adding new PDFs or mnemonics to get updated content
+              </p>
+            </div>
+
             {/* Mark complete button */}
             <div className="text-center py-4">
               {completedTopics.has(topics[selectedTopicIdx]) ? (
@@ -675,11 +787,7 @@ function NCERTChapterReader() {
                     <button
                       className="btn btn-dark ms-3"
                       style={{ borderRadius: "20px" }}
-                      onClick={() => {
-                        const next = selectedTopicIdx + 1;
-                        loadTopic(topics[next], next);
-                        contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
+                      onClick={goToNextTopic}
                     >
                       Next Topic →
                     </button>

@@ -30,6 +30,14 @@ function StudyPlannerPage() {
   const [dailyHours, setDailyHours] = useState(6);
   const [currentLevel, setCurrentLevel] = useState("intermediate");
 
+  // Add new state fields
+  const [strongSubjects, setStrongSubjects] = useState([]);
+  const [completedChapters, setCompletedChapters] = useState("");
+  const [targetScore, setTargetScore] = useState("");
+  const [studySessionLength, setStudySessionLength] = useState(2);
+  const [hasCoaching, setHasCoaching] = useState(false);
+  const [priorityTopics, setPriorityTopics] = useState("");
+
   const subjects = SUBJECTS[currentUser?.examTarget] || SUBJECTS.JEE;
 
   useEffect(() => {
@@ -57,8 +65,15 @@ function StudyPlannerPage() {
         examTarget: currentUser.examTarget,
         examDate,
         weakSubjects: weakSubjects.length ? weakSubjects : subjects,
+        strongSubjects,
         dailyHours,
-        currentLevel
+        currentLevel,
+        completedChapters: completedChapters.split(",").map(s => s.trim()).filter(Boolean),
+        priorityTopics: priorityTopics.split(",").map(s => s.trim()).filter(Boolean),
+        targetScore,
+        studySessionLength,
+        hasCoaching,
+        revisionDaysBuffer: 7
       });
       if (res.data.payload) {
         setPlan(res.data.payload);
@@ -156,6 +171,85 @@ function StudyPlannerPage() {
             </div>
 
             <div className="col-md-6">
+              <label className="form-label fw-semibold">Strong Subjects (optional)</label>
+              <div className="d-flex gap-2 flex-wrap">
+                {subjects.map(s => (
+                  <button
+                    key={s}
+                    className={`btn btn-sm ${strongSubjects.includes(s) ? "btn-success" : "btn-outline-secondary"}`}
+                    onClick={() => setStrongSubjects(prev =>
+                      prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
+                    )}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Target Score / Rank</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="e.g. AIR < 5000, 95+ percentile"
+                value={targetScore}
+                onChange={e => setTargetScore(e.target.value)}
+                style={{ borderRadius: "12px" }}
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">
+                Session Length: {studySessionLength} hrs
+              </label>
+              <input
+                type="range" className="form-range"
+                min={1} max={4} value={studySessionLength}
+                onChange={e => setStudySessionLength(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Chapters Already Completed</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="e.g. Mechanics, Thermodynamics, Organic..."
+                value={completedChapters}
+                onChange={e => setCompletedChapters(e.target.value)}
+                style={{ borderRadius: "12px" }}
+              />
+            </div>
+
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Priority Topics (extra focus)</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="e.g. Electrochemistry, Coordination Compounds"
+                value={priorityTopics}
+                onChange={e => setPriorityTopics(e.target.value)}
+                style={{ borderRadius: "12px" }}
+              />
+            </div>
+
+            <div className="col-md-6 d-flex align-items-center">
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  checked={hasCoaching}
+                  onChange={e => setHasCoaching(e.target.checked)}
+                />
+                <label className="form-check-label fw-semibold">
+                  I attend coaching classes
+                  <small className="text-secondary d-block">Plan will focus on home study only</small>
+                </label>
+              </div>
+            </div>
+
+            <div className="col-md-6">
               <label className="form-label fw-semibold">Current Level</label>
               <select
                 className="form-select"
@@ -175,7 +269,7 @@ function StudyPlannerPage() {
                 disabled={generating}
               >
                 {generating ? (
-                  <><span className="spinner-border spinner-border-sm me-2"/>Generating your personalized plan...</>
+                  <><span className="spinner-border spinner-border-sm me-2" />Generating your personalized plan...</>
                 ) : "⚡ Generate Study Plan"}
               </button>
             </div>
@@ -210,8 +304,8 @@ function StudyPlannerPage() {
                   onClick={() => setActiveTab(tab)}
                 >
                   {tab === "overview" ? "📋 Overview" :
-                   tab === "timetable" ? "🗓 Timetable" :
-                   tab === "checklist" ? "✅ Checklist" : "📊 Analysis"}
+                    tab === "timetable" ? "🗓 Timetable" :
+                      tab === "checklist" ? "✅ Checklist" : "📊 Analysis"}
                 </button>
               </li>
             ))}
@@ -373,7 +467,7 @@ function StudyPlannerPage() {
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="chapters" fill="#212529" radius={[4,4,0,0]} />
+                      <Bar dataKey="chapters" fill="#212529" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -391,10 +485,9 @@ function StudyPlannerPage() {
                           <small className="text-secondary ms-2">{ch.subject}</small>
                         </div>
                         <div className="d-flex gap-2 align-items-center">
-                          <span className={`badge ${
-                            ch.weightage === "high" ? "bg-danger" :
-                            ch.weightage === "medium" ? "bg-warning text-dark" : "bg-secondary"
-                          }`}>{ch.weightage}</span>
+                          <span className={`badge ${ch.weightage === "high" ? "bg-danger" :
+                              ch.weightage === "medium" ? "bg-warning text-dark" : "bg-secondary"
+                            }`}>{ch.weightage}</span>
                           <small className="text-secondary">{ch.days} days</small>
                         </div>
                       </div>

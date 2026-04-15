@@ -3,20 +3,27 @@
 // Uses OpenStreetMap (Leaflet) + Overpass API — completely free
 // Auto-detects location, shows map pins, distance calculator
 
-import { useState, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix Leaflet marker icons (known issue)
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import axios from "axios";
+
 
 const BASE = "http://localhost:8000/api";
 
 // fix leaflet default icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
 });
 
 // custom user location icon
@@ -65,6 +72,8 @@ function CoachingPage() {
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
   const [ntaCenters, setNtaCenters] = useState([]);
+  const [searchStage, setSearchStage] = useState("");
+  const [searchMeta, setSearchMeta] = useState(null);
 
 
   // auto-detect on mount
@@ -104,13 +113,16 @@ function CoachingPage() {
     setError("");
     setSearched(true);
     setCenters([]);
-    setNtaCenters(res.data.ntaCenters || []);
+    setSearchMeta(null);
+    setSearchStage("Searching nearby centers within 25 km...");
 
 
     try {
       const res = await axios.get(`${BASE}/coaching/search`, {
         params: { location: loc }
       });
+      setNtaCenters(res.data.ntaCenters || []);
+      setSearchMeta(res.data.searchMeta || null);
 
       if (res.data.coords) {
         const { lat: cLat, lon: cLon } = res.data.coords;
@@ -133,12 +145,35 @@ function CoachingPage() {
 
       setCenters(results);
       if (results.length === 0) setError("No centers found. Try searching a broader area.");
-    } catch (err) {
+    } catch {
       setError("Search failed. Please try again.");
     } finally {
       setLoading(false);
+      setSearchStage("");
     }
   }
+
+  useEffect(() => {
+    if (!loading) return undefined;
+
+    const stages = [
+      "Searching nearby centers within 25 km...",
+      "No nearby match yet - expanding to 50 km...",
+      "Still searching - expanding to 75 km...",
+      "Checking a wider 100 km radius...",
+      "Exploring up to 125 km...",
+      "Doing a final 150 km sweep and fallback lookup..."
+    ];
+
+    let index = 0;
+    setSearchStage(stages[0]);
+    const interval = setInterval(() => {
+      index = Math.min(index + 1, stages.length - 1);
+      setSearchStage(stages[index]);
+    }, 2200);
+
+    return () => clearInterval(interval);
+  }, [loading]);
 
   function haversine(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -246,7 +281,16 @@ function CoachingPage() {
           {loading && (
             <div className="text-center p-4">
               <div className="spinner-border text-dark mb-2" />
-              <p className="text-secondary small">Searching coaching centers...</p>
+              <p className="text-secondary small mb-1">{searchStage || "Searching coaching centers..."}</p>
+              <small className="text-muted">We expand the radius step by step so nearby results show first.</small>
+            </div>
+          )}
+
+          {!loading && searchMeta?.searchedRadiiKm?.length > 0 && (
+            <div className="px-3 pt-3">
+              <div className="alert alert-light border py-2 small mb-2">
+                Search covered: {searchMeta.searchedRadiiKm.map(km => `${km} km`).join(" -> ")}
+              </div>
             </div>
           )}
 

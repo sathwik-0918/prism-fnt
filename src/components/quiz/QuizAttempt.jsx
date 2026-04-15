@@ -2,7 +2,7 @@
 // one question at a time interface
 // progress bar, next/prev, submit
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MathRenderer from "../common/MathRenderer";
 
 function QuizAttempt({ questions, onSubmit, onCancel }) {
@@ -14,8 +14,22 @@ function QuizAttempt({ questions, onSubmit, onCancel }) {
   const progress = ((currentIdx + 1) / questions.length) * 100;
   const answeredCount = Object.keys(answers).length;
 
-  function handleAnswer(questionIdx, answer) {
-    setAnswers(prev => ({ ...prev, [questionIdx]: answer }));
+  // Add timer state
+  const [showTimer, setShowTimer] = useState(false);
+  const [timeLimit, setTimeLimit] = useState(60);  // seconds per question
+  const [timeLeft, setTimeLeft] = useState(60);
+  const timerRef = useRef(null);
+
+  function handleAnswer(questionIdx, key) {
+    setAnswers(prev => {
+      if (prev[questionIdx] === key) {
+        // deselect if same option clicked
+        const updated = { ...prev };
+        delete updated[questionIdx];
+        return updated;
+      }
+      return { ...prev, [questionIdx]: key };
+    });
   }
 
   function toggleFlag() {
@@ -33,6 +47,30 @@ function QuizAttempt({ questions, onSubmit, onCancel }) {
     }
     onSubmit(answers);
   }
+
+  // Timer effect
+  useEffect(() => {
+    if (!showTimer) return;
+    const resetTimer = setTimeout(() => setTimeLeft(timeLimit), 0);
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          // auto advance on timeout
+          if (currentIdx < questions.length - 1) {
+            setCurrentIdx(i => i + 1);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      clearTimeout(resetTimer);
+      clearInterval(timerRef.current);
+    };
+  }, [currentIdx, showTimer, timeLimit, questions.length]);
 
   return (
     <div>
@@ -53,6 +91,45 @@ function QuizAttempt({ questions, onSubmit, onCancel }) {
           className="progress-bar bg-dark"
           style={{ width: `${progress}%`, transition: "width 0.3s" }}
         />
+      </div>
+
+      {/* Timer toggle */}
+      <div className="d-flex align-items-center gap-2 mb-3">
+        <div className="form-check form-switch mb-0">
+          <input
+            type="checkbox"
+            className="form-check-input"
+            checked={showTimer}
+            onChange={e => setShowTimer(e.target.checked)}
+          />
+          <label className="form-check-label small">
+            ⏱️ Timer per question
+          </label>
+        </div>
+        {showTimer && (
+          <select
+            className="form-select form-select-sm"
+            style={{ width: "auto" }}
+            value={timeLimit}
+            onChange={e => setTimeLimit(Number(e.target.value))}
+          >
+            <option value={30}>30 sec</option>
+            <option value={60}>1 min</option>
+            <option value={120}>2 min</option>
+            <option value={180}>3 min</option>
+          </select>
+        )}
+        {showTimer && (
+          <div
+            className="fw-bold ms-2"
+            style={{
+              color: timeLeft < 10 ? "#dc3545" : timeLeft < 20 ? "#ffc107" : "#28a745",
+              minWidth: "40px"
+            }}
+          >
+            {timeLeft}s
+          </div>
+        )}
       </div>
 
       {/* question card */}
@@ -79,15 +156,18 @@ function QuizAttempt({ questions, onSubmit, onCancel }) {
             {Object.entries(current.options || {}).map(([key, value]) => (
               <button
                 key={key}
-                className={`btn text-start p-3 ${
-                  answers[currentIdx] === key
-                    ? "btn-dark text-white"
-                    : "btn-outline-secondary"
-                }`}
-                style={{ borderRadius: "10px" }}
+                className={`btn text-start p-3 w-100 mb-2 ${answers[currentIdx] === key
+                  ? "btn-dark text-white"
+                  : "btn-outline-secondary"
+                  }`}
+                style={{ borderRadius: "10px", transition: "all 0.15s" }}
                 onClick={() => handleAnswer(currentIdx, key)}
+                title={answers[currentIdx] === key ? "Click again to deselect" : ""}
               >
                 <span className="fw-bold me-2">{key}.</span><MathRenderer content={value} />
+                {answers[currentIdx] === key && (
+                  <span className="ms-auto small opacity-50 float-end">click to deselect</span>
+                )}
               </button>
             ))}
           </div>
@@ -116,10 +196,10 @@ function QuizAttempt({ questions, onSubmit, onCancel }) {
                 background: answers[i]
                   ? "#212529"
                   : flagged.has(i)
-                  ? "#ffc107"
-                  : i === currentIdx
-                  ? "#6c757d"
-                  : "#dee2e6",
+                    ? "#ffc107"
+                    : i === currentIdx
+                      ? "#6c757d"
+                      : "#dee2e6",
                 color: answers[i] || i === currentIdx ? "white" : "black",
                 fontSize: "11px", border: "none"
               }}
